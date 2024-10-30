@@ -2,30 +2,30 @@
 The module is intended to be moved to a common library for huntflow services.
 It's here to test it in production environment.
 """
+
 import asyncio
 import logging
 import platform
 import time
 import uuid
 from functools import wraps
-from typing import Iterable, Set, Optional
+from typing import Iterable, Optional, Set
 
 import aiofiles
 from fastapi import FastAPI
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.requests import Request
-from starlette.responses import Response
-from starlette.routing import Match
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 from prometheus_client import (
+    CONTENT_TYPE_LATEST,
     CollectorRegistry,
     Counter,
     Gauge,
     Histogram,
     generate_latest,
-    CONTENT_TYPE_LATEST,
 )
-
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.requests import Request
+from starlette.responses import Response
+from starlette.routing import Match
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 LOGGER = logging.getLogger(__name__)
 REGISTRY = CollectorRegistry()
@@ -243,8 +243,7 @@ class _PrometheusMiddleware(BaseHTTPMiddleware):
 
 
 def get_http_response_metrics() -> Response:
-    """Method returns HTTP Response with current metrics in prometheus format.
-    """
+    """Method returns HTTP Response with current metrics in prometheus format."""
     return Response(generate_latest(REGISTRY), headers={"Content-Type": CONTENT_TYPE_LATEST})
 
 
@@ -269,7 +268,10 @@ def observe_metrics(method: str, metric_timings: Histogram, metric_inprogress: G
                 return await coro(*args, **kwargs)
             finally:
                 end = time.perf_counter()
-                metric_timings.labels(**COMMON_LABELS_VALUES, method=method,).observe(end - start)
+                metric_timings.labels(
+                    **COMMON_LABELS_VALUES,
+                    method=method,
+                ).observe(end - start)
                 if metric_inprogress is not None:
                     metric_inprogress.labels(**COMMON_LABELS_VALUES, method=method).dec()
 

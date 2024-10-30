@@ -58,6 +58,12 @@ exclude = [
 line-length = 100
 indent-width = 4
 target-version = "py38"
+
+[tool.lint]
+ignore = [
+    "E501", # line-too-long
+    "W191", # tab-indentation
+]
 select = [
     "B", # flake8-bugbear
     "C4", # flake8-comprehensions
@@ -66,10 +72,6 @@ select = [
     "I", # isort
     "W", # pycodestyle - Warning
     "UP", # pyupgrade
-]
-ignore = [
-    "E501", # line-too-long
-    "W191", # tab-indentation
 ]
 
 [tool.ruff.format]
@@ -100,5 +102,5 @@ docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
 [tool.pdm.scripts]
-lint = "ruff ."
+lint = "ruff check"
 fmt = "ruff format ."
