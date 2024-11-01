@@ -35,7 +35,9 @@ async def test_file_export(tmp_path):
     try:
         await asyncio.sleep(0.15)
         with open(file_path, "r") as fin:
-            metrics = list(metric for metric in text_fd_to_metric_families(fin) if metric.name == metric_name)
+            metrics = list(
+                metric for metric in text_fd_to_metric_families(fin) if metric.name == metric_name
+            )
     finally:
         stop_export_to_file()
         await asyncio.sleep(0)
@@ -45,9 +47,9 @@ async def test_file_export(tmp_path):
     count = None
     sum_ = None
     for sample in metric.samples:
-        if sample.name == 'test_export_histogram_count':
+        if sample.name == "test_export_histogram_count":
             count = sample.value
-        elif sample.name == 'test_export_histogram_sum':
+        elif sample.name == "test_export_histogram_sum":
             sum_ = sample.value
     assert count == 1
     assert sum_ is not None

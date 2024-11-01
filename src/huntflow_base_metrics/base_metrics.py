@@ -6,7 +6,7 @@ import time
 import uuid
 from contextlib import suppress
 from functools import wraps
-from typing import Optional, Type, List, Callable, Any, Awaitable
+from typing import Optional, Type, List, Callable, Any
 
 from prometheus_client import (
     CollectorRegistry,
@@ -76,7 +76,7 @@ def start_metrics(
     facility_name: str,
     facility_id: str,
     out_file_path: Optional[str] = None,
-    enabled: bool =True,
+    enabled: bool = True,
     write_to_file: bool = False,
     file_update_interval: float = 15,
 ) -> None:

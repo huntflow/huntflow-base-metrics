@@ -43,10 +43,12 @@ def test_ok():
     assert response.json() == {"status": "ok"}
 
     labels = COMMON_LABELS_VALUES.copy()
-    labels.update({
-        "method": "GET",
-        "path_template": "/ok",
-    })
+    labels.update(
+        {
+            "method": "GET",
+            "path_template": "/ok",
+        }
+    )
     assert (
         REGISTRY.get_sample_value(
             "requests_total",
@@ -54,7 +56,7 @@ def test_ok():
         )
         == 1
     )
-    
+
     labels_responses_total = labels.copy()
     labels_responses_total["status_code"] = "200"
     assert (
@@ -95,18 +97,20 @@ def test_exception():
         client.get("/valueerror")
 
     labels = COMMON_LABELS_VALUES.copy()
-    labels.update({
-        "method": "GET",
-        "path_template": "/valueerror",
-        "exception_type": "ValueError",
-    })
+    labels.update(
+        {
+            "method": "GET",
+            "path_template": "/valueerror",
+            "exception_type": "ValueError",
+        }
+    )
 
     assert (
         REGISTRY.get_sample_value(
             "exceptions_total",
             labels,
         )
-        ==  1
+        == 1
     )
 
 
@@ -129,10 +133,12 @@ def test_include():
     assert response.json() == {"status": "two"}
 
     labels = COMMON_LABELS_VALUES.copy()
-    labels.update({
-        "method": "GET",
-        "path_template": "/ok",
-    })
+    labels.update(
+        {
+            "method": "GET",
+            "path_template": "/ok",
+        }
+    )
     assert (
         REGISTRY.get_sample_value(
             "requests_total",
@@ -179,10 +185,12 @@ def test_exclude():
     assert response.json() == {"status": "two"}
 
     labels = COMMON_LABELS_VALUES.copy()
-    labels.update({
-        "method": "GET",
-        "path_template": "/ok",
-    })
+    labels.update(
+        {
+            "method": "GET",
+            "path_template": "/ok",
+        }
+    )
     assert (
         REGISTRY.get_sample_value(
             "requests_total",
