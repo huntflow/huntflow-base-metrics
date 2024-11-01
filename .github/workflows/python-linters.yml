@@ -26,4 +26,4 @@ jobs:
         run: pdm run ruff check
 
       - name: Run mypy
-        run: pdm run mypy .
+        run: pdm run mypy src
