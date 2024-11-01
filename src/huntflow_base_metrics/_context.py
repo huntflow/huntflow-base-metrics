@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, Set, Dict, Tuple, List
+from typing import Dict, List, Optional, Set, Tuple
 
 from prometheus_client import CollectorRegistry
 from prometheus_client.metrics import MetricWrapperBase

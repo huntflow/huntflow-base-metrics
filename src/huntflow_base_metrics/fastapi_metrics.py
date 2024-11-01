@@ -1,16 +1,15 @@
 import time
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
 from fastapi import FastAPI
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Match
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from .base_metrics import register_metric, apply_labels, REGISTRY
-
+from .base_metrics import REGISTRY, apply_labels, register_metric
 
 # Metrics labels for HTTP requests stats
 HTTP_METRICS_LABELS = ["method", "path_template"]

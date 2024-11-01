@@ -1,13 +1,14 @@
 import asyncio
 from uuid import uuid4
 
-from huntflow_base_metrics.base_metrics import (
+from prometheus_client.parser import text_fd_to_metric_families
+
+from huntflow_base_metrics import (
     observe_metrics,
-    start_metrics,
     register_method_observe_histogram,
+    start_metrics,
 )
 from huntflow_base_metrics.metrics_export import start_export_to_file, stop_export_to_file
-from prometheus_client.parser import text_fd_to_metric_families
 
 
 async def test_file_export(tmp_path):
@@ -34,10 +35,10 @@ async def test_file_export(tmp_path):
     start_export_to_file(file_path, 0.1)
     try:
         await asyncio.sleep(0.15)
-        with open(file_path, "r") as fin:
-            metrics = list(
+        with open(file_path) as fin:
+            metrics = [
                 metric for metric in text_fd_to_metric_families(fin) if metric.name == metric_name
-            )
+            ]
     finally:
         stop_export_to_file()
         await asyncio.sleep(0)

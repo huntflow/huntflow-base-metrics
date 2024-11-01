@@ -6,14 +6,14 @@ import time
 import uuid
 from contextlib import suppress
 from functools import wraps
-from typing import Optional, Type, List, Callable, Any
+from typing import Any, Callable, List, Optional, Type
 
 from prometheus_client import (
     CollectorRegistry,
     Gauge,
     Histogram,
 )
-from prometheus_client.metrics import T, MetricWrapperBase
+from prometheus_client.metrics import MetricWrapperBase, T
 
 from ._context import MetricsContext as _MetricsContext
 from .metrics_export import start_export_to_file, stop_export_to_file

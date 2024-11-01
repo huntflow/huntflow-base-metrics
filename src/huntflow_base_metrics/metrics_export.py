@@ -3,7 +3,7 @@ import logging
 from typing import Any, Tuple
 
 import aiofiles
-from prometheus_client import generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest
 
 from ._context import MetricsContext as _MetricsContext
 

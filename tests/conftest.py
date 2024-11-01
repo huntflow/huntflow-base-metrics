@@ -1,6 +1,6 @@
 import pytest
 
-from huntflow_base_metrics.base_metrics import stop_metrics
+from huntflow_base_metrics import stop_metrics
 
 
 @pytest.fixture(scope="function", autouse=True)

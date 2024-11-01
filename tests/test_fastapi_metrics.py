@@ -2,10 +2,10 @@ from contextlib import suppress
 from uuid import uuid4
 
 from fastapi import FastAPI
-
-from huntflow_base_metrics.base_metrics import start_metrics, REGISTRY, COMMON_LABELS_VALUES
-from huntflow_base_metrics.fastapi_metrics import add_middleware
 from starlette.testclient import TestClient
+
+from huntflow_base_metrics import add_middleware, start_metrics
+from huntflow_base_metrics.base_metrics import COMMON_LABELS_VALUES, REGISTRY
 
 FACILITY_NAME = "test_service"
 FACILITY_ID = uuid4().hex

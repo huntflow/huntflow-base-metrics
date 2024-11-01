@@ -1,7 +1,8 @@
 import pytest
 from prometheus_client import Histogram
 
-from huntflow_base_metrics.base_metrics import apply_labels, register_metric, COMMON_LABELS_VALUES
+from huntflow_base_metrics import apply_labels, register_metric
+from huntflow_base_metrics.base_metrics import COMMON_LABELS_VALUES
 
 
 def test_apply_labels_ok():

@@ -3,11 +3,11 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 from huntflow_base_metrics.base_metrics import (
-    observe_metrics,
-    start_metrics,
-    register_method_observe_histogram,
-    REGISTRY,
     COMMON_LABELS_VALUES,
+    REGISTRY,
+    observe_metrics,
+    register_method_observe_histogram,
+    start_metrics,
 )
 
 
