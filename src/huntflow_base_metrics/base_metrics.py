@@ -40,6 +40,17 @@ COMMON_LABELS_VALUES = {
 
 
 def register_metric(type_: Type[T], name: str, description: str, labels: List[str]) -> T:
+    """Create and register a new metric with the given `type_`.
+    :param type_: a prometheus_client class, must be nested from
+        MetricWrapperBase class. Examples: Histogram, Counter, etc.
+    :param name: unique metric name
+    :param description: metric short description
+    :param labels: list of metric-specific labels. It shouldn't include
+        labels defined in COMMON_LABELS, because these labels will be added
+        implicitely.
+
+    Raises ValueError if `name` is already registered.
+    """
     if name in _MetricsContext.metrics_by_names:
         raise ValueError(f"Metric '{name}' already registered")
     metric = type_(
@@ -54,10 +65,18 @@ def register_metric(type_: Type[T], name: str, description: str, labels: List[st
 
 
 def register_method_observe_histogram(name: str, description: str) -> Histogram:
+    """Create and register a new Histogram.
+    The created Histogram will contain label `method` and is suitable to pass
+    it to `observe_metrics` decorator.
+    """
     return register_metric(Histogram, name, description, ["method"])
 
 
 def register_method_observe_gauge(name: str, description: str) -> Gauge:
+    """Create and register a new Gauge.
+    The created Gauge will contain label `method` and is suitable to pass
+    it to `observe_metrics` decorator.
+    """
     return register_metric(Gauge, name, description, ["method"])
 
 
@@ -66,6 +85,13 @@ def get_metric(name: str) -> MetricWrapperBase:
 
 
 def apply_labels(metric: T, **labels: str) -> T:
+    """Apply labels for a given metric.
+    Requires the same lables that was passed during metric creation
+    (see `register_metric` method)
+    Checks if the given set of labels is the same that was defined
+    when the metrics was registered. If labels don't match, raises ValueError.
+    Also applies common labels values implicetly.
+    """
     metric_name, expected_labels = _MetricsContext.metrics_by_objects[metric]
     if set(expected_labels) != set(labels):
         raise ValueError(f"Invalid labels set ({list(labels)}) for metric '{metric_name}'")
@@ -128,7 +154,7 @@ def observe_metrics(
 ) -> Callable:
     """Decorator to measure timings of some method
     Applicable only for async methods.
-    :param method: label value for observed method/function
+    :param method: `method` label value for observed method/function
     :param metric_timings: histogram collector to observe timing
     :param metric_inprogress: optional Gauge collector to observe in progress
         counter.
