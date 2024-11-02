@@ -1,5 +1,6 @@
 """Base definitions for metrics collections via prometheus client."""
 
+import inspect
 import logging
 import platform
 import time
@@ -30,7 +31,7 @@ POD_LABEL = "pod"
 
 # Labels must be present in all collectors.
 # These labels identify the whole service and it's current instance.
-# The values should be set via `init_metrics_common` function
+# The values should be set via `start_metrics` function
 # before usage.
 COMMON_LABELS = [SERVICE_LABEL, POD_LABEL]
 COMMON_LABELS_VALUES = {
@@ -160,22 +161,39 @@ def observe_metrics(
         counter.
     """
 
-    def wrap(coro: Callable) -> Callable:
-        @wraps(coro)
-        async def _wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrap(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             if not _MetricsContext.enable_metrics:
-                return await coro(*args, **kwargs)
+                return await func(*args, **kwargs)
             start = time.perf_counter()
             if metric_inprogress is not None:
                 apply_labels(metric_inprogress, method=method).inc()
             try:
-                return await coro(*args, **kwargs)
+                return await func(*args, **kwargs)
             finally:
                 end = time.perf_counter()
                 apply_labels(metric_timings, method=method).observe(end - start)
                 if metric_inprogress is not None:
                     apply_labels(metric_inprogress, method=method).dec()
 
-        return _wrapper
+        @wraps(func)
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not _MetricsContext.enable_metrics:
+                return func(*args, **kwargs)
+            start = time.perf_counter()
+            if metric_inprogress is not None:
+                apply_labels(metric_inprogress, method=method).inc()
+            try:
+                return func(*args, **kwargs)
+            finally:
+                end = time.perf_counter()
+                apply_labels(metric_timings, method=method).observe(end - start)
+                if metric_inprogress is not None:
+                    apply_labels(metric_inprogress, method=method).dec()
+
+        if inspect.iscoroutinefunction(func):
+            return wrapper
+        return sync_wrapper
 
     return wrap
