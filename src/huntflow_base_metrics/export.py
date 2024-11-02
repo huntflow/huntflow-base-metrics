@@ -5,7 +5,7 @@ from typing import Any, Tuple
 import aiofiles
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest
 
-from ._context import MetricsContext as _MetricsContext
+from ._context import METRIC_CONTEXT as _METRIC_CONTEXT
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,21 +48,21 @@ def start_export_to_file(file_path: str, update_delay: float) -> None:
     :param update_delay: interval in seconds between writing to file.
     """
     assert file_path
-    assert _MetricsContext.registry is not None
+    assert _METRIC_CONTEXT.registry is not None
     task = asyncio.create_task(
-        _update_metric_file(file_path, update_delay, _MetricsContext.registry)
+        _update_metric_file(file_path, update_delay, _METRIC_CONTEXT.registry)
     )
-    _MetricsContext.write_to_file_task = task
+    _METRIC_CONTEXT.write_to_file_task = task
 
 
 def stop_export_to_file() -> None:
-    task = _MetricsContext.write_to_file_task
+    task = _METRIC_CONTEXT.write_to_file_task
     if task is not None:
         task.cancel()
-    _MetricsContext.write_to_file_task = None
+    _METRIC_CONTEXT.write_to_file_task = None
 
 
 def export_to_http_response() -> Tuple[Any, str]:
     """Returns tuple of exported metrics and content-type value"""
-    assert _MetricsContext.registry is not None
-    return generate_latest(_MetricsContext.registry), CONTENT_TYPE_LATEST
+    assert _METRIC_CONTEXT.registry is not None
+    return generate_latest(_METRIC_CONTEXT.registry), CONTENT_TYPE_LATEST

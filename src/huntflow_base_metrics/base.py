@@ -16,7 +16,7 @@ from prometheus_client import (
 )
 from prometheus_client.metrics import MetricWrapperBase, T
 
-from ._context import MetricsContext as _MetricsContext
+from ._context import METRIC_CONTEXT as _METRIC_CONTEXT
 from .export import start_export_to_file, stop_export_to_file
 
 LOGGER = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ def register_metric(type_: Type[T], name: str, description: str, labels: List[st
 
     Raises ValueError if `name` is already registered.
     """
-    if name in _MetricsContext.metrics_by_names:
+    if name in _METRIC_CONTEXT.metrics_by_names:
         raise ValueError(f"Metric '{name}' already registered")
     metric = type_(
         name,
@@ -60,8 +60,8 @@ def register_metric(type_: Type[T], name: str, description: str, labels: List[st
         COMMON_LABELS + labels,
         registry=REGISTRY,
     )
-    _MetricsContext.metrics_by_names[name] = metric
-    _MetricsContext.metrics_by_objects[metric] = (name, labels)
+    _METRIC_CONTEXT.metrics_by_names[name] = metric
+    _METRIC_CONTEXT.metrics_by_objects[metric] = (name, labels)
     return metric
 
 
@@ -82,7 +82,7 @@ def register_method_observe_gauge(name: str, description: str) -> Gauge:
 
 
 def get_metric(name: str) -> MetricWrapperBase:
-    return _MetricsContext.metrics_by_names[name]
+    return _METRIC_CONTEXT.metrics_by_names[name]
 
 
 def apply_labels(metric: T, **labels: str) -> T:
@@ -93,7 +93,7 @@ def apply_labels(metric: T, **labels: str) -> T:
     when the metrics was registered. If labels don't match, raises ValueError.
     Also applies common labels values implicetly.
     """
-    metric_name, expected_labels = _MetricsContext.metrics_by_objects[metric]
+    metric_name, expected_labels = _METRIC_CONTEXT.metrics_by_objects[metric]
     if set(expected_labels) != set(labels):
         raise ValueError(f"Invalid labels set ({list(labels)}) for metric '{metric_name}'")
     return metric.labels(**COMMON_LABELS_VALUES, **labels)
@@ -120,8 +120,8 @@ def start_metrics(
         to file `out_file_path`.
     :param file_update_interval: pause in seconds between saving metrics to `out_file_path` file
     """
-    _MetricsContext.enable_metrics = enabled
-    _MetricsContext.registry = REGISTRY
+    _METRIC_CONTEXT.enable_metrics = enabled
+    _METRIC_CONTEXT.registry = REGISTRY
     if facility_name:
         COMMON_LABELS_VALUES[SERVICE_LABEL] = facility_name
     if facility_id:
@@ -130,7 +130,7 @@ def start_metrics(
         if not out_file_path:
             raise ValueError("Empty file path while enabled writing to file")
         start_export_to_file(out_file_path, file_update_interval)
-    for metric in _MetricsContext.metrics_by_objects:
+    for metric in _METRIC_CONTEXT.metrics_by_objects:
         with suppress(ValueError):
             # there is no public interface in registry/collectors to check if the
             # metric is already registered. So just catch names conflict and
@@ -142,8 +142,8 @@ def stop_metrics() -> None:
     """Method to stop all background tasks initialized by `start_metrics`.
     Actually handle only the background task to write metrics to a file.
     """
-    _MetricsContext.enable_metrics = False
-    for metric in _MetricsContext.metrics_by_objects:
+    _METRIC_CONTEXT.enable_metrics = False
+    for metric in _METRIC_CONTEXT.metrics_by_objects:
         with suppress(KeyError):
             REGISTRY.unregister(metric)
         metric.clear()
@@ -164,7 +164,7 @@ def observe_metrics(
     def wrap(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            if not _MetricsContext.enable_metrics:
+            if not _METRIC_CONTEXT.enable_metrics:
                 return await func(*args, **kwargs)
             start = time.perf_counter()
             if metric_inprogress is not None:
@@ -179,7 +179,7 @@ def observe_metrics(
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-            if not _MetricsContext.enable_metrics:
+            if not _METRIC_CONTEXT.enable_metrics:
                 return func(*args, **kwargs)
             start = time.perf_counter()
             if metric_inprogress is not None:
