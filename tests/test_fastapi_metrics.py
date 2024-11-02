@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from huntflow_base_metrics import add_middleware, start_metrics
-from huntflow_base_metrics.base_metrics import COMMON_LABELS_VALUES, REGISTRY
+from huntflow_base_metrics.base import COMMON_LABELS_VALUES, REGISTRY
 
 FACILITY_NAME = "test_service"
 FACILITY_ID = uuid4().hex

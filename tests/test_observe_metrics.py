@@ -2,7 +2,7 @@ import asyncio
 from unittest.mock import Mock
 from uuid import uuid4
 
-from huntflow_base_metrics.base_metrics import (
+from huntflow_base_metrics.base import (
     COMMON_LABELS_VALUES,
     REGISTRY,
     observe_metrics,

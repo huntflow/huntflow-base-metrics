@@ -9,7 +9,7 @@ from starlette.responses import Response
 from starlette.routing import Match
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from .base_metrics import REGISTRY, apply_labels, register_metric
+from .base import REGISTRY, apply_labels, register_metric
 
 # Metrics labels for HTTP requests stats
 HTTP_METRICS_LABELS = ["method", "path_template"]

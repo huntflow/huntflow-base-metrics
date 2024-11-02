@@ -8,7 +8,7 @@ from huntflow_base_metrics import (
     register_method_observe_histogram,
     start_metrics,
 )
-from huntflow_base_metrics.metrics_export import start_export_to_file, stop_export_to_file
+from huntflow_base_metrics.export import start_export_to_file, stop_export_to_file
 
 
 async def test_file_export(tmp_path):

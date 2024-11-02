@@ -1,4 +1,4 @@
-from .base_metrics import (
+from .base import (
     apply_labels,
     observe_metrics,
     register_method_observe_gauge,
@@ -7,8 +7,8 @@ from .base_metrics import (
     start_metrics,
     stop_metrics,
 )
-from .fastapi_metrics import add_middleware
-from .metrics_export import export_to_http_response
+from .export import export_to_http_response
+from .fastapi import add_middleware
 
 __all__ = [
     "apply_labels",

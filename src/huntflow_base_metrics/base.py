@@ -16,7 +16,7 @@ from prometheus_client import (
 from prometheus_client.metrics import MetricWrapperBase, T
 
 from ._context import MetricsContext as _MetricsContext
-from .metrics_export import start_export_to_file, stop_export_to_file
+from .export import start_export_to_file, stop_export_to_file
 
 LOGGER = logging.getLogger(__name__)
 REGISTRY = CollectorRegistry()
