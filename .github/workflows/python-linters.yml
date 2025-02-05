@@ -20,7 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pdm sync -dG lint
+        run: pdm sync -dG dev
 
       - name: Run lint
         run: pdm run ruff check
