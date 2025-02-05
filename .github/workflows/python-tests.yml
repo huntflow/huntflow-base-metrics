@@ -20,7 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pdm install -dG dev
+        run: pdm sync -dG dev
 
       - name: Run Tests
         run: pdm run pytest
