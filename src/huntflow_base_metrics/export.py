@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Any, Tuple
+
+from typing import Tuple
 
 import aiofiles
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest
@@ -23,22 +24,22 @@ async def _update_metric_file(
     file_path: str, update_delay: float, registry: CollectorRegistry
 ) -> None:
     LOGGER.info("Writing metrics to %s", file_path)
-    error_count = 0
+    err_count = 0
     while True:
         await asyncio.sleep(update_delay)
         try:
             LOGGER.debug("Updating metrics file")
             async with aiofiles.open(file_path, "wb") as dst:
                 await dst.write(generate_latest(registry))
-            error_count = 0
+            err_count = 0
         except asyncio.CancelledError:
             LOGGER.info("Write metric task is cancelled")
             break
         except Exception:
-            error_count += 1
-            LOGGER.exception("Failed to write metrics to file: %s", file_path)
-            if error_count >= _MAX_FILE_WRITE_ERRORS:
-                LOGGER.warning("Update metrics file: total number of errors %s. Exit", error_count)
+            err_count += 1
+            LOGGER.warning("Failed to write metrics to file: %s", file_path)
+            if err_count >= _MAX_FILE_WRITE_ERRORS:
+                LOGGER.exception("Update metrics file: total number of errors %s. Exit", err_count)
                 break
 
 
@@ -62,7 +63,7 @@ def stop_export_to_file() -> None:
     _METRIC_CONTEXT.write_to_file_task = None
 
 
-def export_to_http_response() -> Tuple[Any, str]:
+def export_to_http_response() -> Tuple[bytes, str]:
     """Returns tuple of exported metrics and content-type value"""
     assert _METRIC_CONTEXT.registry is not None
     return generate_latest(_METRIC_CONTEXT.registry), CONTENT_TYPE_LATEST

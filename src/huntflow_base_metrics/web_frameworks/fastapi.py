@@ -1,61 +1,38 @@
 import time
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple, Set, Sequence
 
 from fastapi import FastAPI
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Match
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from .base import REGISTRY, apply_labels, register_metric
-
-# Metrics labels for HTTP requests stats
-HTTP_METRICS_LABELS = ["method", "path_template"]
-
-
-REQUESTS = register_metric(
-    Counter,
-    "requests_total",
-    "Total count of requests by method and path.",
-    HTTP_METRICS_LABELS,
-)
-RESPONSES = register_metric(
-    Counter,
-    "responses_total",
-    "Total count of responses by method, path and status codes.",
-    HTTP_METRICS_LABELS + ["status_code"],
-)
-REQUESTS_PROCESSING_TIME = register_metric(
-    Histogram,
-    "requests_processing_time_seconds",
-    "Histogram of requests processing time by path (in seconds)",
-    HTTP_METRICS_LABELS,
-)
-EXCEPTIONS = register_metric(
-    Counter,
-    "exceptions_total",
-    "Total count of exceptions raised by path and exception type",
-    HTTP_METRICS_LABELS + ["exception_type"],
-)
-REQUESTS_IN_PROGRESS = register_metric(
-    Gauge,
-    "requests_in_progress",
-    "Gauge of requests by method and path currently being processed",
-    HTTP_METRICS_LABELS,
+from huntflow_base_metrics._context import METRIC_CONTEXT
+from huntflow_base_metrics.base import apply_labels
+from huntflow_base_metrics.export import export_to_http_response
+from huntflow_base_metrics.web_frameworks._request import (
+    REQUESTS,
+    RESPONSES,
+    REQUESTS_PROCESSING_TIME,
+    EXCEPTIONS,
+    REQUESTS_IN_PROGRESS,
 )
 
 
 class _PrometheusMiddleware(BaseHTTPMiddleware):
-    include_routes: Optional[List[str]] = None
-    exclude_routes: Optional[List[str]] = None
+    include_routes: Optional[Set[str]] = None
+    exclude_routes: Optional[Set[str]] = None
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         method = request.method
         path_template, is_handled_path = self.get_path_template(request)
 
-        if not is_handled_path or self._is_path_excluded(path_template):
+        if (
+            not METRIC_CONTEXT.enable_metrics or
+            not is_handled_path or
+            self._is_path_excluded(path_template)
+        ):
             return await call_next(request)
 
         apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template).inc()
@@ -114,17 +91,21 @@ class _PrometheusMiddleware(BaseHTTPMiddleware):
 
 def add_middleware(
     app: FastAPI,
-    include_routes: Optional[List[str]] = None,
-    exclude_routes: Optional[List[str]] = None,
+    include_routes: Optional[Sequence[str]] = None,
+    exclude_routes: Optional[Sequence[str]] = None,
 ) -> None:
-    """Add observing middleware to the given FastAPI application.
-    :param include_routes: optional list of path templates to observe.
+    """
+    Add observing middleware to the given FastAPI application.
+
+    :param include_routes: optional set of path templates to observe.
         If it's not empty, then only the specified routes will be observed
         (also exclude_routes will be ignored).
-    :param exclude_routes: optional list of path templates to not observer.
+    :param exclude_routes: optional set of path templates to not observe.
         If it's not empty (and include_routes is not specified), then the
         specified routes will not be observed.
     """
+    include_routes = set(include_routes) if include_routes else include_routes
+    exclude_routes = set(exclude_routes) if exclude_routes else exclude_routes
     _PrometheusMiddleware.include_routes = include_routes
     _PrometheusMiddleware.exclude_routes = exclude_routes
     app.add_middleware(_PrometheusMiddleware)
@@ -132,4 +113,5 @@ def add_middleware(
 
 def get_http_response_metrics() -> Response:
     """Method returns HTTP Response with current metrics in prometheus format."""
-    return Response(generate_latest(REGISTRY), headers={"Content-Type": CONTENT_TYPE_LATEST})
+    content, content_type = export_to_http_response()
+    return Response(content, headers={"Content-Type": content_type})

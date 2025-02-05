@@ -8,7 +8,6 @@ from .base import (
     stop_metrics,
 )
 from .export import export_to_http_response
-from .fastapi import add_middleware
 
 __all__ = [
     "apply_labels",
@@ -18,6 +17,5 @@ __all__ = [
     "register_metric",
     "start_metrics",
     "stop_metrics",
-    "add_middleware",
     "export_to_http_response",
 ]
