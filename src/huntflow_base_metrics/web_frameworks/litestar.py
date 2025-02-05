@@ -2,7 +2,7 @@ import time
 from contextvars import ContextVar
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Set, Type, Optional, Sequence
+from typing import Any, Callable, Iterable, Set, Type, Optional
 
 from litestar.enums import ScopeType
 from litestar.middleware import AbstractMiddleware
@@ -48,8 +48,9 @@ class _PrometheusMiddleware(AbstractMiddleware):
     exclude_routes: Optional[Set[str]] = None
     scopes = {ScopeType.HTTP}
 
-    def __init__(self, app: ASGIApp, *args, **kwargs) -> None:
-        super().__init__(app=app, scopes=self.scopes, *args, **kwargs)
+    def __init__(self, app: ASGIApp, *args: Any, **kwargs: Any) -> None:
+        self.app = app
+        super().__init__(app, *args, **kwargs)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         request = Request[Any, Any, Any](scope, receive)
@@ -74,7 +75,10 @@ class _PrometheusMiddleware(AbstractMiddleware):
                 REQUESTS_PROCESSING_TIME, method=method, path_template=path_template
             ).observe(span.duration)
             apply_labels(
-                RESPONSES, method=method, path_template=path_template, status_code=str(status_code),
+                RESPONSES,
+                method=method,
+                path_template=path_template,
+                status_code=str(status_code),
             ).inc()
             apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template).dec()
             exception_type = exception_context.get()
@@ -111,8 +115,8 @@ class _PrometheusMiddleware(AbstractMiddleware):
 
 
 def get_middleware(
-    include_routes: Optional[Sequence[str]] = None,
-    exclude_routes: Optional[Sequence[str]] = None,
+    include_routes: Optional[Iterable[str]] = None,
+    exclude_routes: Optional[Iterable[str]] = None,
 ) -> Type[_PrometheusMiddleware]:
     """
     Returns observing middleware for Litestar application.
@@ -126,8 +130,8 @@ def get_middleware(
         specified routes will not be observed.
     """
 
-    include_routes = set(include_routes) if include_routes else include_routes
-    exclude_routes = set(exclude_routes) if exclude_routes else exclude_routes
+    include_routes = set(include_routes) if include_routes is not None else include_routes
+    exclude_routes = set(exclude_routes) if exclude_routes is not None else exclude_routes
     _PrometheusMiddleware.include_routes = include_routes
     _PrometheusMiddleware.exclude_routes = exclude_routes
 

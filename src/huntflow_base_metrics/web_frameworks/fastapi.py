@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Tuple, Set, Sequence
+from typing import Iterable, Optional, Tuple, Set
 
 from fastapi import FastAPI
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -29,9 +29,9 @@ class _PrometheusMiddleware(BaseHTTPMiddleware):
         path_template, is_handled_path = self.get_path_template(request)
 
         if (
-            not METRIC_CONTEXT.enable_metrics or
-            not is_handled_path or
-            self._is_path_excluded(path_template)
+            not METRIC_CONTEXT.enable_metrics
+            or not is_handled_path
+            or self._is_path_excluded(path_template)
         ):
             return await call_next(request)
 
@@ -91,12 +91,13 @@ class _PrometheusMiddleware(BaseHTTPMiddleware):
 
 def add_middleware(
     app: FastAPI,
-    include_routes: Optional[Sequence[str]] = None,
-    exclude_routes: Optional[Sequence[str]] = None,
+    include_routes: Optional[Iterable[str]] = None,
+    exclude_routes: Optional[Iterable[str]] = None,
 ) -> None:
     """
     Add observing middleware to the given FastAPI application.
 
+    :param app: FastAPI application.
     :param include_routes: optional set of path templates to observe.
         If it's not empty, then only the specified routes will be observed
         (also exclude_routes will be ignored).
@@ -104,8 +105,8 @@ def add_middleware(
         If it's not empty (and include_routes is not specified), then the
         specified routes will not be observed.
     """
-    include_routes = set(include_routes) if include_routes else include_routes
-    exclude_routes = set(exclude_routes) if exclude_routes else exclude_routes
+    include_routes = set(include_routes) if include_routes is not None else include_routes
+    exclude_routes = set(exclude_routes) if exclude_routes is not None else exclude_routes
     _PrometheusMiddleware.include_routes = include_routes
     _PrometheusMiddleware.exclude_routes = exclude_routes
     app.add_middleware(_PrometheusMiddleware)
