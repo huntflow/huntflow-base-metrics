@@ -5,8 +5,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from huntflow_base_metrics import start_metrics
-from huntflow_base_metrics.web_frameworks.fastapi import get_http_response_metrics, add_middleware
-
+from huntflow_base_metrics.web_frameworks.fastapi import add_middleware, get_http_response_metrics
 
 FACILITY_NAME = "test_service"
 FACILITY_ID = uuid4().hex

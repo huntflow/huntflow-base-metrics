@@ -1,7 +1,6 @@
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 
 from huntflow_base_metrics import register_metric
-
 
 # Metrics labels for HTTP requests stats
 HTTP_METRICS_LABELS = ["method", "path_template"]

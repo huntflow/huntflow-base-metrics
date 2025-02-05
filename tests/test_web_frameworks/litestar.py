@@ -1,7 +1,7 @@
 from typing import Optional, Sequence
 from uuid import uuid4
 
-from litestar import Request, Response, MediaType, Litestar, get
+from litestar import Litestar, MediaType, Request, Response, get
 from litestar.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
 from litestar.testing import TestClient
 
@@ -11,7 +11,6 @@ from huntflow_base_metrics.web_frameworks.litestar import (
     get_http_response_metrics,
     get_middleware,
 )
-
 
 FACILITY_NAME = "test_service"
 FACILITY_ID = uuid4().hex

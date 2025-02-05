@@ -1,7 +1,6 @@
 from contextlib import suppress
 
 import pytest
-
 from prometheus_client.exposition import CONTENT_TYPE_LATEST
 
 from huntflow_base_metrics.base import COMMON_LABELS_VALUES, REGISTRY

@@ -2,23 +2,22 @@ import time
 from contextvars import ContextVar
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Iterable, Set, Type, Optional
-
-from litestar.enums import ScopeType
-from litestar.middleware import AbstractMiddleware
-from litestar.types import Scope, Receive, Send, ASGIApp, Message
+from typing import Any, Callable, Iterable, Optional, Set, Type
 
 from litestar import Request, Response
+from litestar.enums import ScopeType
+from litestar.middleware import AbstractMiddleware
+from litestar.types import ASGIApp, Message, Receive, Scope, Send
 
 from huntflow_base_metrics._context import METRIC_CONTEXT
 from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
 from huntflow_base_metrics.web_frameworks._request import (
-    REQUESTS,
-    RESPONSES,
-    REQUESTS_PROCESSING_TIME,
     EXCEPTIONS,
+    REQUESTS,
     REQUESTS_IN_PROGRESS,
+    REQUESTS_PROCESSING_TIME,
+    RESPONSES,
 )
 
 

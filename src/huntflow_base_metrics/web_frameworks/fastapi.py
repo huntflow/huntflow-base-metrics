@@ -1,5 +1,5 @@
 import time
-from typing import Iterable, Optional, Tuple, Set
+from typing import Iterable, Optional, Set, Tuple
 
 from fastapi import FastAPI
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -12,11 +12,11 @@ from huntflow_base_metrics._context import METRIC_CONTEXT
 from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
 from huntflow_base_metrics.web_frameworks._request import (
-    REQUESTS,
-    RESPONSES,
-    REQUESTS_PROCESSING_TIME,
     EXCEPTIONS,
+    REQUESTS,
     REQUESTS_IN_PROGRESS,
+    REQUESTS_PROCESSING_TIME,
+    RESPONSES,
 )
 
 
