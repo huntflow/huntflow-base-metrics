@@ -2,23 +2,25 @@ import time
 from contextvars import ContextVar
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Iterable, Optional, Set, Type
+from typing import Any, Callable, Iterable, Optional, Type
 
 from litestar import Request, Response
 from litestar.enums import ScopeType
 from litestar.middleware import AbstractMiddleware
 from litestar.types import ASGIApp, Message, Receive, Scope, Send
 
-from huntflow_base_metrics._context import METRIC_CONTEXT
 from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
-from huntflow_base_metrics.web_frameworks._request import (
+from huntflow_base_metrics.web_frameworks._middleware import PrometheusMiddleware, PathTemplate
+from huntflow_base_metrics.web_frameworks._request_metrics import (
     EXCEPTIONS,
     REQUESTS,
     REQUESTS_IN_PROGRESS,
     REQUESTS_PROCESSING_TIME,
     RESPONSES,
 )
+
+__all__ = ["exception_context", "get_http_response_metrics", "get_middleware"]
 
 
 class _ExceptionContext:
@@ -35,16 +37,14 @@ exception_context = _ExceptionContext()
 
 
 @dataclass
-class RequestSpan:
+class _RequestSpan:
     start_time: float
     end_time: float = 0
     duration: float = 0
     status_code: int = 200
 
 
-class _PrometheusMiddleware(AbstractMiddleware):
-    include_routes: Optional[Set[str]] = None
-    exclude_routes: Optional[Set[str]] = None
+class _PrometheusMiddleware(PrometheusMiddleware, AbstractMiddleware):
     scopes = {ScopeType.HTTP}
 
     def __init__(self, app: ASGIApp, *args: Any, **kwargs: Any) -> None:
@@ -54,63 +54,62 @@ class _PrometheusMiddleware(AbstractMiddleware):
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         request = Request[Any, Any, Any](scope, receive)
         method = request.method
-        path_template = request.scope["path_template"]
+        path_template = self.get_path_template(request)
 
-        if not METRIC_CONTEXT.enable_metrics or self._is_path_excluded(path_template):
+        if not self.need_process(path_template):
             await self.app(scope, receive, send)
             return
 
-        apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template).inc()
-        apply_labels(REQUESTS, method=method, path_template=path_template).inc()
+        apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template.value).inc()
+        apply_labels(REQUESTS, method=method, path_template=path_template.value).inc()
 
-        span = RequestSpan(start_time=time.perf_counter())
-        wrapped_send = self._get_wrapped_send(send, span)
+        span = _RequestSpan(start_time=time.perf_counter())
+        send_wrapper = self._get_send_wrapper(send, span)
 
         try:
-            await self.app(scope, receive, wrapped_send)
+            await self.app(scope, receive, send_wrapper)
         finally:
             status_code = span.status_code
             apply_labels(
-                REQUESTS_PROCESSING_TIME, method=method, path_template=path_template
+                REQUESTS_PROCESSING_TIME, method=method, path_template=path_template.value
             ).observe(span.duration)
             apply_labels(
                 RESPONSES,
                 method=method,
-                path_template=path_template,
+                path_template=path_template.value,
                 status_code=str(status_code),
             ).inc()
-            apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template).dec()
+            apply_labels(
+                REQUESTS_IN_PROGRESS, method=method, path_template=path_template.value,
+            ).dec()
             exception_type = exception_context.get()
             if exception_type:
                 apply_labels(
                     EXCEPTIONS,
                     method=method,
-                    path_template=path_template,
+                    path_template=path_template.value,
                     exception_type=exception_type,
                 ).inc()
 
-    def _get_wrapped_send(self, send: Send, request_span: RequestSpan) -> Callable:
+    @staticmethod
+    def _get_send_wrapper(send: Send, span: _RequestSpan) -> Callable:
         @wraps(send)
         async def wrapped_send(message: Message) -> None:
             if message["type"] == "http.response.start":
-                request_span.status_code = message["status"]
+                span.status_code = message["status"]
 
             if message["type"] == "http.response.body":
                 end = time.perf_counter()
-                request_span.duration = end - request_span.start_time
-                request_span.end_time = end
+                span.duration = end - span.start_time
+                span.end_time = end
 
             await send(message)
 
         return wrapped_send
 
-    @classmethod
-    def _is_path_excluded(cls, path_template: str) -> bool:
-        if cls.include_routes:
-            return path_template not in cls.include_routes
-        if cls.exclude_routes:
-            return path_template in cls.exclude_routes
-        return False
+    @staticmethod
+    def get_path_template(request: Request) -> PathTemplate:
+        return PathTemplate(value=request.scope["path_template"], is_handled=True)
 
 
 def get_middleware(

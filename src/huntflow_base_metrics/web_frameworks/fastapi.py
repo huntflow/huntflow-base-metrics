@@ -1,5 +1,6 @@
 import time
-from typing import Iterable, Optional, Set, Tuple
+
+from typing import Iterable, Optional
 
 from fastapi import FastAPI
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -8,10 +9,10 @@ from starlette.responses import Response
 from starlette.routing import Match
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from huntflow_base_metrics._context import METRIC_CONTEXT
 from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
-from huntflow_base_metrics.web_frameworks._request import (
+from huntflow_base_metrics.web_frameworks._middleware import PrometheusMiddleware, PathTemplate
+from huntflow_base_metrics.web_frameworks._request_metrics import (
     EXCEPTIONS,
     REQUESTS,
     REQUESTS_IN_PROGRESS,
@@ -19,24 +20,19 @@ from huntflow_base_metrics.web_frameworks._request import (
     RESPONSES,
 )
 
+__all__ = ["add_middleware", "get_http_response_metrics"]
 
-class _PrometheusMiddleware(BaseHTTPMiddleware):
-    include_routes: Optional[Set[str]] = None
-    exclude_routes: Optional[Set[str]] = None
 
+class _PrometheusMiddleware(PrometheusMiddleware, BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         method = request.method
-        path_template, is_handled_path = self.get_path_template(request)
+        path_template = self.get_path_template(request)
 
-        if (
-            not METRIC_CONTEXT.enable_metrics
-            or not is_handled_path
-            or self._is_path_excluded(path_template)
-        ):
+        if not self.need_process(path_template):
             return await call_next(request)
 
-        apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template).inc()
-        apply_labels(REQUESTS, method=method, path_template=path_template).inc()
+        apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template.value).inc()
+        apply_labels(REQUESTS, method=method, path_template=path_template.value).inc()
 
         before_time = time.perf_counter()
         status_code = HTTP_500_INTERNAL_SERVER_ERROR
@@ -46,7 +42,7 @@ class _PrometheusMiddleware(BaseHTTPMiddleware):
             apply_labels(
                 EXCEPTIONS,
                 method=method,
-                path_template=path_template,
+                path_template=path_template.value,
                 exception_type=type(e).__name__,
             ).inc()
             raise
@@ -54,39 +50,31 @@ class _PrometheusMiddleware(BaseHTTPMiddleware):
             status_code = response.status_code
             after_time = time.perf_counter()
             apply_labels(
-                REQUESTS_PROCESSING_TIME, method=method, path_template=path_template
+                REQUESTS_PROCESSING_TIME, method=method, path_template=path_template.value
             ).observe(after_time - before_time)
         finally:
             apply_labels(
                 RESPONSES,
                 method=method,
-                path_template=path_template,
+                path_template=path_template.value,
                 status_code=str(status_code),
             ).inc()
             apply_labels(
                 REQUESTS_IN_PROGRESS,
                 method=method,
-                path_template=path_template,
+                path_template=path_template.value,
             ).dec()
 
         return response
 
-    @classmethod
-    def _is_path_excluded(cls, path_template: str) -> bool:
-        if cls.include_routes:
-            return path_template not in cls.include_routes
-        if cls.exclude_routes:
-            return path_template in cls.exclude_routes
-        return False
-
     @staticmethod
-    def get_path_template(request: Request) -> Tuple[str, bool]:
+    def get_path_template(request: Request) -> PathTemplate:
         for route in request.app.routes:
             match, _ = route.matches(request.scope)
             if match == Match.FULL:
-                return route.path, True
+                return PathTemplate(value=route.path, is_handled=True)
 
-        return request.url.path, False
+        return PathTemplate(value=request.url.path, is_handled=False)
 
 
 def add_middleware(

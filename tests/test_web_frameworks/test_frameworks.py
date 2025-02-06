@@ -8,7 +8,10 @@ from tests.test_web_frameworks.fastapi import fastapi_app
 from tests.test_web_frameworks.litestar import litestar_app
 
 
-@pytest.mark.parametrize("create_app", [fastapi_app, litestar_app])
+frameworks = pytest.mark.parametrize("create_app", [fastapi_app, litestar_app])
+
+
+@frameworks
 def test_ok(create_app):
     client = create_app()
 
@@ -44,7 +47,7 @@ def test_ok(create_app):
     assert REGISTRY.get_sample_value("requests_total", labels_missed) is None
 
 
-@pytest.mark.parametrize("create_app", [fastapi_app, litestar_app])
+@frameworks
 def test_exception(create_app):
     client = create_app()
 
@@ -70,7 +73,7 @@ def test_exception(create_app):
     )
 
 
-@pytest.mark.parametrize("create_app", [fastapi_app, litestar_app])
+@frameworks
 def test_include(create_app):
     client = create_app(include_routes=["/ok"])
 
@@ -102,7 +105,7 @@ def test_include(create_app):
     assert REGISTRY.get_sample_value("requests_total", labels) is None
 
 
-@pytest.mark.parametrize("create_app", [fastapi_app, litestar_app])
+@frameworks
 def test_exclude(create_app):
     client = create_app(exclude_routes=["/ok", "/one"])
 
@@ -134,7 +137,7 @@ def test_exclude(create_app):
     assert REGISTRY.get_sample_value("requests_total", labels) == 1
 
 
-@pytest.mark.parametrize("create_app", [fastapi_app, litestar_app])
+@frameworks
 def test_get_http_response_metrics(create_app):
     client = create_app()
 
