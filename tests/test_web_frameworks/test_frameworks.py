@@ -5,7 +5,7 @@ from typing import Dict, Optional, Sequence, Union
 import pytest
 from aiohttp import ClientResponse as AiohttpResponse
 from aiohttp.test_utils import TestClient as AiohttpTestClient
-from httpx import Response as HttpxResponse
+from httpx import AsyncClient as HttpxClient, Response as HttpxResponse
 from prometheus_client.exposition import CONTENT_TYPE_LATEST
 
 from huntflow_base_metrics.base import COMMON_LABELS_VALUES, REGISTRY
@@ -32,10 +32,10 @@ async def create_app(request):
     factory = factories[request.param]
     aiohttp_client: Optional[AiohttpTestClient] = None
 
-    async def test_client(
+    async def create_application(
         include_routes: Optional[Sequence[str]] = None,
         exclude_routes: Optional[Sequence[str]] = None,
-    ):
+    ) -> Union[AiohttpTestClient, HttpxClient]:
         client = factory(include_routes=include_routes, exclude_routes=exclude_routes)
         if request.param == Framework.aiohttp:
             # For aiohttp client implementation we need to start and stop server
@@ -44,7 +44,7 @@ async def create_app(request):
             await client.start_server()
         return client
 
-    yield test_client
+    yield create_application
 
     if aiohttp_client:
         await aiohttp_client.close()
