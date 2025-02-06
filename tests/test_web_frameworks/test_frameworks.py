@@ -5,7 +5,8 @@ from typing import Dict, Optional, Sequence, Union
 import pytest
 from aiohttp import ClientResponse as AiohttpResponse
 from aiohttp.test_utils import TestClient as AiohttpTestClient
-from httpx import AsyncClient as HttpxClient, Response as HttpxResponse
+from httpx import AsyncClient as HttpxClient
+from httpx import Response as HttpxResponse
 from prometheus_client.exposition import CONTENT_TYPE_LATEST
 
 from huntflow_base_metrics.base import COMMON_LABELS_VALUES, REGISTRY
