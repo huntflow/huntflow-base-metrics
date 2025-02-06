@@ -1,7 +1,6 @@
 import abc
-
 from dataclasses import dataclass
-from typing import Optional, Set
+from typing import Any, Optional, Set
 
 from huntflow_base_metrics._context import METRIC_CONTEXT
 
@@ -18,7 +17,7 @@ class PrometheusMiddleware(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_path_template(request) -> PathTemplate:
+    def get_path_template(request: Any) -> PathTemplate:
         pass
 
     @classmethod

@@ -1,21 +1,17 @@
 from contextlib import suppress
 from enum import Enum
-from inspect import iscoroutine
-from typing import Dict, Optional, TYPE_CHECKING, Union, Sequence
+from typing import Dict, Optional, Sequence, Union
 
 import pytest
-
+from aiohttp import ClientResponse as AiohttpResponse
+from aiohttp.test_utils import TestClient as AiohttpTestClient
+from httpx import Response as HttpxResponse
 from prometheus_client.exposition import CONTENT_TYPE_LATEST
 
 from huntflow_base_metrics.base import COMMON_LABELS_VALUES, REGISTRY
 from tests.test_web_frameworks.aiohttp import aiohttp_app
 from tests.test_web_frameworks.fastapi import fastapi_app
 from tests.test_web_frameworks.litestar import litestar_app
-
-if TYPE_CHECKING:
-    from aiohttp import ClientResponse
-    from aiohttp.test_utils import TestClient
-    from httpx import Response
 
 
 class Framework(str, Enum):
@@ -34,7 +30,7 @@ factories = {
 @pytest.fixture(params=[Framework.fastapi, Framework.aiohttp, Framework.litestar])
 async def create_app(request):
     factory = factories[request.param]
-    aiohttp_client: Optional["TestClient"] = None
+    aiohttp_client: Optional[AiohttpTestClient] = None
 
     async def test_client(
         include_routes: Optional[Sequence[str]] = None,
@@ -55,7 +51,7 @@ async def create_app(request):
 
 
 async def check_response(
-    response: Union["Response", "ClientResponse"],
+    resp: Union[HttpxResponse, AiohttpResponse],
     expected_json: Optional[Dict] = None,
     status: int = 200,
 ) -> None:
@@ -63,13 +59,11 @@ async def check_response(
     There might be a httpx or aiohttp response with different behavior.
     """
     if expected_json is not None:
-        json = response.json()
-        if iscoroutine(json):
-            json = await json
-
+        json = await resp.json() if isinstance(resp, AiohttpResponse) else resp.json()
         assert json == expected_json
 
-    status_code = getattr(response, "status_code", None) or getattr(response, "status")
+    status_code = resp.status if isinstance(resp, AiohttpResponse) else resp.status_code
+
     assert status_code == status
 
 

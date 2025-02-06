@@ -1,5 +1,4 @@
 import time
-
 from typing import Iterable, Optional
 
 from fastapi import FastAPI
@@ -11,7 +10,7 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
-from huntflow_base_metrics.web_frameworks._middleware import PrometheusMiddleware, PathTemplate
+from huntflow_base_metrics.web_frameworks._middleware import PathTemplate, PrometheusMiddleware
 from huntflow_base_metrics.web_frameworks._request_metrics import (
     EXCEPTIONS,
     REQUESTS,

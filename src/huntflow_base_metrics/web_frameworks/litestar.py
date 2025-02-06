@@ -11,7 +11,7 @@ from litestar.types import ASGIApp, Message, Receive, Scope, Send
 
 from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
-from huntflow_base_metrics.web_frameworks._middleware import PrometheusMiddleware, PathTemplate
+from huntflow_base_metrics.web_frameworks._middleware import PathTemplate, PrometheusMiddleware
 from huntflow_base_metrics.web_frameworks._request_metrics import (
     EXCEPTIONS,
     REQUESTS,
@@ -80,7 +80,9 @@ class _PrometheusMiddleware(PrometheusMiddleware, AbstractMiddleware):
                 status_code=str(status_code),
             ).inc()
             apply_labels(
-                REQUESTS_IN_PROGRESS, method=method, path_template=path_template.value,
+                REQUESTS_IN_PROGRESS,
+                method=method,
+                path_template=path_template.value,
             ).dec()
             exception_type = exception_context.get()
             if exception_type:

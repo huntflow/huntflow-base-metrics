@@ -1,5 +1,4 @@
 import time
-
 from http import HTTPStatus
 from typing import Callable, Iterable, Optional
 
@@ -7,7 +6,7 @@ from aiohttp.web import Application, Request, Response, middleware
 
 from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
-from huntflow_base_metrics.web_frameworks._middleware import PrometheusMiddleware, PathTemplate
+from huntflow_base_metrics.web_frameworks._middleware import PathTemplate, PrometheusMiddleware
 from huntflow_base_metrics.web_frameworks._request_metrics import (
     EXCEPTIONS,
     REQUESTS,
@@ -66,11 +65,10 @@ class _PrometheusMiddleware(PrometheusMiddleware):
     @staticmethod
     def get_path_template(request: Request) -> PathTemplate:
         match_info = request.match_info
-        value = match_info.route.resource.canonical if match_info else request.rel_url.path
-        return PathTemplate(
-            value=value,
-            is_handled=match_info is not None
-        )
+        value = request.rel_url.path
+        if match_info and match_info.route.resource:
+            value = match_info.route.resource.canonical
+        return PathTemplate(value=value, is_handled=match_info is not None)
 
 
 def add_middleware(
