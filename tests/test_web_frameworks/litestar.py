@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from litestar import Litestar, MediaType, Request, Response, get
 from litestar.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
-from litestar.testing import TestClient
+from litestar.testing import AsyncTestClient
 
 from huntflow_base_metrics import start_metrics
 from huntflow_base_metrics.web_frameworks.litestar import (
@@ -31,7 +31,7 @@ def exception_handler(_: Request, exc: Exception):
 def litestar_app(
     include_routes: Optional[Sequence[str]] = None,
     exclude_routes: Optional[Sequence[str]] = None,
-) -> TestClient:
+) -> AsyncTestClient:
     @get("/valueerror")
     async def value_error() -> None:
         raise ValueError()
@@ -59,4 +59,4 @@ def litestar_app(
         exception_handlers={Exception: exception_handler},
     )
 
-    return TestClient(app)
+    return AsyncTestClient(app)

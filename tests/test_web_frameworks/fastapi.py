@@ -2,7 +2,7 @@ from typing import Optional, Sequence
 from uuid import uuid4
 
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
 from huntflow_base_metrics import start_metrics
 from huntflow_base_metrics.web_frameworks.fastapi import add_middleware, get_http_response_metrics
@@ -14,7 +14,7 @@ FACILITY_ID = uuid4().hex
 def fastapi_app(
     include_routes: Optional[Sequence[str]] = None,
     exclude_routes: Optional[Sequence[str]] = None,
-) -> TestClient:
+) -> AsyncClient:
     app = FastAPI()
 
     @app.get("/valueerror")
@@ -40,4 +40,6 @@ def fastapi_app(
     start_metrics(FACILITY_NAME, FACILITY_ID)
     add_middleware(app, include_routes, exclude_routes)
 
-    return TestClient(app)
+    transport = ASGITransport(app=app)
+
+    return AsyncClient(transport=transport, base_url="http://testserver")
