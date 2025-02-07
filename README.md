@@ -295,7 +295,7 @@ function. It accepts two parameters:
 * `method` - method name passed to observe_metrics decorator
 * `le` - bucket name (built-in label of Histogram collector)
 
-Usage example
+### Usage example
 
 ```python
 from huntflow_base_metrics import (
@@ -330,5 +330,20 @@ async def calculate_stats(filters) -> StatsDTO:
 
 ```
 
-
-# TODO: another use-cases and development notes
+# Contributing
+* First install the [PDM](https://pdm-project.org/en/latest/#recommended-installation-method). The current version used is 2.20.1
+* Install `dev` dependencies
+```shell
+pdm install -dG dev
+```
+* Make your changes to the code
+* Run tests
+```shell
+pdm run pytest
+```
+* Run linters
+```shell
+pdm run ruff check
+pdm run ruff format --check
+pdm run mypy src
+```
