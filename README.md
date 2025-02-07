@@ -106,10 +106,11 @@ async def on_shutdown(app: Litestar):
     stop_metrics()
 
 
-def exception_handler(_: Request, exc: Exception):
+def exception_handler(request: Request, exc: Exception):
     """
     Important!
-    If you need to collect EXCEPTIONS metrics you should set it to exception_context here
+    If you need to collect `exceptions_total` metric you should set the
+    exception type name to exception_context
     """
     status_code = getattr(exc, "status_code", HTTP_500_INTERNAL_SERVER_ERROR)
     exception_type = type(exc).__name__
@@ -254,6 +255,21 @@ Current number of in-progress requests
 * `pod`
 * `method` - HTTP method like `GET`, `POST`
 * `template_path` - path provided as a route
+
+### exceptions_total
+
+Total count of exceptions raised by path and exception type
+
+**Type** Counter
+
+**Labels**
+
+* `service`
+* `pod`
+* `method` - HTTP method like `GET`, `POST`
+* `template_path` - path provided as a route
+* `exception_type` - exception type name
+
 
 ## Observe timing for custom methods
 
