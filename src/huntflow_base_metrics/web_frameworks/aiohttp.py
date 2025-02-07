@@ -15,6 +15,8 @@ from huntflow_base_metrics.web_frameworks._request_metrics import (
     RESPONSES,
 )
 
+__all__ = ["add_middleware", "get_http_response_metrics"]
+
 
 class _PrometheusMiddleware(PrometheusMiddleware):
     @classmethod
