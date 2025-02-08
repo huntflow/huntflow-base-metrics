@@ -4,16 +4,8 @@ from typing import Callable, Iterable, Optional
 
 from aiohttp.web import Application, Request, Response, middleware
 
-from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
 from huntflow_base_metrics.web_frameworks._middleware import PathTemplate, PrometheusMiddleware
-from huntflow_base_metrics.web_frameworks._request_metrics import (
-    EXCEPTIONS,
-    REQUESTS,
-    REQUESTS_IN_PROGRESS,
-    REQUESTS_PROCESSING_TIME,
-    RESPONSES,
-)
 
 __all__ = ["add_middleware", "get_http_response_metrics"]
 
@@ -22,45 +14,23 @@ class _PrometheusMiddleware(PrometheusMiddleware):
     @classmethod
     @middleware
     async def dispatch(cls, request: Request, handler: Callable) -> Response:
-        method = request.method
-        path_template = cls.get_path_template(request)
-
-        if not cls.need_process(path_template):
+        ctx = cls.get_request_context(request)
+        if not cls.need_process(ctx):
             return await handler(request)
 
-        apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template.value).inc()
-        apply_labels(REQUESTS, method=method, path_template=path_template.value).inc()
+        cls.count_request_before(ctx)
 
-        before_time = time.perf_counter()
-        status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         try:
             response = await handler(request)
         except BaseException as e:
-            apply_labels(
-                EXCEPTIONS,
-                method=method,
-                path_template=path_template.value,
-                exception_type=type(e).__name__,
-            ).inc()
+            ctx.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+            cls.count_request_exceptions(ctx, type(e).__name__)
             raise
         else:
-            status_code = response.status
-            after_time = time.perf_counter()
-            apply_labels(
-                REQUESTS_PROCESSING_TIME, method=method, path_template=path_template.value
-            ).observe(after_time - before_time)
+            ctx.status_code = response.status
         finally:
-            apply_labels(
-                RESPONSES,
-                method=method,
-                path_template=path_template.value,
-                status_code=str(status_code),
-            ).inc()
-            apply_labels(
-                REQUESTS_IN_PROGRESS,
-                method=method,
-                path_template=path_template.value,
-            ).dec()
+            ctx.end_time = time.perf_counter()
+            cls.count_request_after(ctx)
 
         return response
 

@@ -8,61 +8,31 @@ from starlette.responses import Response
 from starlette.routing import Match
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from huntflow_base_metrics.base import apply_labels
 from huntflow_base_metrics.export import export_to_http_response
 from huntflow_base_metrics.web_frameworks._middleware import PathTemplate, PrometheusMiddleware
-from huntflow_base_metrics.web_frameworks._request_metrics import (
-    EXCEPTIONS,
-    REQUESTS,
-    REQUESTS_IN_PROGRESS,
-    REQUESTS_PROCESSING_TIME,
-    RESPONSES,
-)
 
 __all__ = ["add_middleware", "get_http_response_metrics"]
 
 
 class _PrometheusMiddleware(PrometheusMiddleware, BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        method = request.method
-        path_template = self.get_path_template(request)
-
-        if not self.need_process(path_template):
+        ctx = self.get_request_context(request)
+        if not self.need_process(ctx):
             return await call_next(request)
 
-        apply_labels(REQUESTS_IN_PROGRESS, method=method, path_template=path_template.value).inc()
-        apply_labels(REQUESTS, method=method, path_template=path_template.value).inc()
+        self.count_request_before(ctx)
 
-        before_time = time.perf_counter()
-        status_code = HTTP_500_INTERNAL_SERVER_ERROR
         try:
             response = await call_next(request)
         except BaseException as e:
-            apply_labels(
-                EXCEPTIONS,
-                method=method,
-                path_template=path_template.value,
-                exception_type=type(e).__name__,
-            ).inc()
+            ctx.status_code = HTTP_500_INTERNAL_SERVER_ERROR
+            self.count_request_exceptions(ctx, type(e).__name__)
             raise
         else:
-            status_code = response.status_code
-            after_time = time.perf_counter()
-            apply_labels(
-                REQUESTS_PROCESSING_TIME, method=method, path_template=path_template.value
-            ).observe(after_time - before_time)
+            ctx.status_code = response.status_code
         finally:
-            apply_labels(
-                RESPONSES,
-                method=method,
-                path_template=path_template.value,
-                status_code=str(status_code),
-            ).inc()
-            apply_labels(
-                REQUESTS_IN_PROGRESS,
-                method=method,
-                path_template=path_template.value,
-            ).dec()
+            ctx.end_time = time.perf_counter()
+            self.count_request_after(ctx)
 
         return response
 
