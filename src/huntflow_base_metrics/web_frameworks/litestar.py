@@ -59,14 +59,14 @@ class _PrometheusMiddleware(PrometheusMiddleware, AbstractMiddleware):
                 self.count_request_exceptions(ctx, exception_type)
 
     @staticmethod
-    def _get_send_wrapper(send: Send, span: RequestContext) -> Callable:
+    def _get_send_wrapper(send: Send, ctx: RequestContext) -> Callable:
         @wraps(send)
         async def wrapped_send(message: Message) -> None:
             if message["type"] == "http.response.start":
-                span.status_code = message["status"]
+                ctx.status_code = message["status"]
 
             if message["type"] == "http.response.body":
-                span.end_time = time.perf_counter()
+                ctx.end_time = time.perf_counter()
 
             await send(message)
 
