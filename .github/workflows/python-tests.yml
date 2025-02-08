@@ -25,3 +25,16 @@ jobs:
       - name: Run Tests
         run: pdm run pytest
 
+  frameworks_compability_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.11.7' ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up nox
+        uses: wntrblm/nox@2024.04.15
+        with:
+          python-version: ${{ matrix.python-version }}
+
