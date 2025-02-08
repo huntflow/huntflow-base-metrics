@@ -65,14 +65,18 @@ class PrometheusMiddleware(abc.ABC):
     @classmethod
     def count_request_before(cls, ctx: RequestContext) -> None:
         apply_labels(
-            REQUESTS_IN_PROGRESS, method=ctx.method, path_template=ctx.path_template.value,
+            REQUESTS_IN_PROGRESS,
+            method=ctx.method,
+            path_template=ctx.path_template.value,
         ).inc()
         apply_labels(REQUESTS, method=ctx.method, path_template=ctx.path_template.value).inc()
 
     @classmethod
     def count_request_after(cls, ctx: RequestContext) -> None:
         apply_labels(
-            REQUESTS_PROCESSING_TIME, method=ctx.method, path_template=ctx.path_template.value,
+            REQUESTS_PROCESSING_TIME,
+            method=ctx.method,
+            path_template=ctx.path_template.value,
         ).observe(ctx.duration)
         apply_labels(
             RESPONSES,
@@ -81,7 +85,9 @@ class PrometheusMiddleware(abc.ABC):
             status_code=str(ctx.status_code),
         ).inc()
         apply_labels(
-            REQUESTS_IN_PROGRESS, method=ctx.method, path_template=ctx.path_template.value,
+            REQUESTS_IN_PROGRESS,
+            method=ctx.method,
+            path_template=ctx.path_template.value,
         ).dec()
 
     @classmethod
