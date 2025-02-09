@@ -113,6 +113,7 @@ fmt = "ruff format ."
 pythonpath = [
   ".", "src"
 ]
+testpaths = ["tests"]
 filterwarnings = [
     "ignore:.*litestar.contrib.attrs.AttrsSchemaPlugin*:DeprecationWarning"
 ]
