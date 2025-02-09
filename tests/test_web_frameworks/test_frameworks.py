@@ -1,58 +1,18 @@
 from contextlib import suppress
-from enum import Enum
-from typing import Dict, Optional, Sequence, Union
+from inspect import iscoroutine
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
-import pytest
-from aiohttp import ClientResponse as AiohttpResponse
-from aiohttp.test_utils import TestClient as AiohttpTestClient
-from httpx import AsyncClient as HttpxClient
-from httpx import Response as HttpxResponse
 from prometheus_client.exposition import CONTENT_TYPE_LATEST
 
 from huntflow_base_metrics.base import COMMON_LABELS_VALUES, REGISTRY
-from tests.test_web_frameworks.aiohttp import aiohttp_app
-from tests.test_web_frameworks.fastapi import fastapi_app
-from tests.test_web_frameworks.litestar import litestar_app
 
-
-class Framework(str, Enum):
-    aiohttp = "aiohttp"
-    fastapi = "fastapi"
-    litestar = "litestar"
-
-
-factories = {
-    Framework.fastapi: fastapi_app,
-    Framework.aiohttp: aiohttp_app,
-    Framework.litestar: litestar_app,
-}
-
-
-@pytest.fixture(params=[Framework.fastapi, Framework.aiohttp, Framework.litestar])
-async def create_app(request):
-    factory = factories[request.param]
-    aiohttp_client: Optional[AiohttpTestClient] = None
-
-    async def create_application(
-        include_routes: Optional[Sequence[str]] = None,
-        exclude_routes: Optional[Sequence[str]] = None,
-    ) -> Union[AiohttpTestClient, HttpxClient]:
-        client = factory(include_routes=include_routes, exclude_routes=exclude_routes)
-        if request.param == Framework.aiohttp:
-            # For aiohttp client implementation we need to start and stop server
-            nonlocal aiohttp_client
-            aiohttp_client = client
-            await client.start_server()
-        return client
-
-    yield create_application
-
-    if aiohttp_client:
-        await aiohttp_client.close()
+if TYPE_CHECKING:
+    from aiohttp import ClientResponse as AiohttpResponse
+    from httpx import Response as HttpxResponse
 
 
 async def check_response(
-    resp: Union[HttpxResponse, AiohttpResponse],
+    resp: Union["HttpxResponse", "AiohttpResponse"],
     expected_json: Optional[Dict] = None,
     status: int = 200,
 ) -> None:
@@ -60,10 +20,12 @@ async def check_response(
     There might be a httpx or aiohttp response with different behavior.
     """
     if expected_json is not None:
-        json = await resp.json() if isinstance(resp, AiohttpResponse) else resp.json()
+        json = resp.json()
+        if iscoroutine(json):
+            json = await json
         assert json == expected_json
 
-    status_code = resp.status if isinstance(resp, AiohttpResponse) else resp.status_code
+    status_code = resp.status if hasattr(resp, "status") else resp.status_code
 
     assert status_code == status
 
