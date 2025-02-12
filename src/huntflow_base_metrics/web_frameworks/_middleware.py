@@ -1,7 +1,7 @@
 import abc
 import time
 from dataclasses import dataclass
-from typing import Any, Optional, Set
+from typing import Generic, Optional, Set, TypeVar
 
 from huntflow_base_metrics import apply_labels
 from huntflow_base_metrics._context import METRIC_CONTEXT
@@ -33,17 +33,20 @@ class RequestContext:
         return self.end_time - self.start_time
 
 
-class PrometheusMiddleware(abc.ABC):
+RequestType = TypeVar("RequestType")
+
+
+class PrometheusMiddleware(abc.ABC, Generic[RequestType]):
     include_routes: Optional[Set[str]] = None
     exclude_routes: Optional[Set[str]] = None
 
     @staticmethod
-    def get_method(request: Any) -> str:
+    def get_method(request: RequestType) -> str:
         return request.method
 
     @staticmethod
     @abc.abstractmethod
-    def get_path_template(request: Any) -> PathTemplate:
+    def get_path_template(request: RequestType) -> PathTemplate:
         pass
 
     @classmethod

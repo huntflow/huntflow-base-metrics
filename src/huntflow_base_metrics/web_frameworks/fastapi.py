@@ -14,7 +14,7 @@ from huntflow_base_metrics.web_frameworks._middleware import PathTemplate, Prome
 __all__ = ["add_middleware", "get_http_response_metrics"]
 
 
-class _PrometheusMiddleware(PrometheusMiddleware, BaseHTTPMiddleware):
+class _PrometheusMiddleware(PrometheusMiddleware[Request], BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         ctx = self.get_request_context(request)
         if not self.need_process(ctx):
