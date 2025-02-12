@@ -66,10 +66,7 @@ def add_middleware(
         If it's not empty (and include_routes is not specified), then the
         specified routes will not be observed.
     """
-    include_routes = set(include_routes) if include_routes is not None else include_routes
-    exclude_routes = set(exclude_routes) if exclude_routes is not None else exclude_routes
-    _PrometheusMiddleware.include_routes = include_routes
-    _PrometheusMiddleware.exclude_routes = exclude_routes
+    _PrometheusMiddleware.configure(include_routes, exclude_routes)
     app.add_middleware(_PrometheusMiddleware)
 
 

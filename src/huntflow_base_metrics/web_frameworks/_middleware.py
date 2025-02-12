@@ -1,7 +1,7 @@
 import abc
 import time
 from dataclasses import dataclass
-from typing import Generic, Optional, Set, TypeVar
+from typing import Generic, Iterable, Optional, Set, TypeVar
 
 from huntflow_base_metrics import apply_labels
 from huntflow_base_metrics._context import METRIC_CONTEXT
@@ -39,6 +39,15 @@ RequestType = TypeVar("RequestType")
 class PrometheusMiddleware(abc.ABC, Generic[RequestType]):
     include_routes: Optional[Set[str]] = None
     exclude_routes: Optional[Set[str]] = None
+
+    @classmethod
+    def configure(
+        cls,
+        include_routes: Optional[Iterable[str]] = None,
+        exclude_routes: Optional[Iterable[str]] = None,
+    ) -> None:
+        cls.include_routes = set(include_routes) if include_routes is not None else None
+        cls.exclude_routes = set(exclude_routes) if exclude_routes is not None else None
 
     @staticmethod
     @abc.abstractmethod
