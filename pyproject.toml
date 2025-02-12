@@ -3,7 +3,7 @@ name = "huntflow-base-metrics"
 version = "0.2.0"
 description = "Prometheus metrics for Huntflow services"
 authors = [
-    {name = "Aleksandr Kuznetsov", email = "akuznetsov@huntflow.ru"},
+    {name = "Developers huntflow", email = "developer@huntflow.ru"},
 ]
 dependencies = [
     "prometheus-client>=0.21.0",
