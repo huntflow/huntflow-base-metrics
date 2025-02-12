@@ -1,6 +1,6 @@
 import abc
 from dataclasses import dataclass
-from typing import Any, Optional, Set
+from typing import Generic, Optional, Set, TypeVar
 
 from huntflow_base_metrics._context import METRIC_CONTEXT
 
@@ -11,13 +11,16 @@ class PathTemplate:
     is_handled: bool
 
 
-class PrometheusMiddleware(abc.ABC):
+RequestType = TypeVar("RequestType")
+
+
+class PrometheusMiddleware(abc.ABC, Generic[RequestType]):
     include_routes: Optional[Set[str]] = None
     exclude_routes: Optional[Set[str]] = None
 
     @staticmethod
     @abc.abstractmethod
-    def get_path_template(request: Any) -> PathTemplate:
+    def get_path_template(request: RequestType) -> PathTemplate:
         pass
 
     @classmethod
