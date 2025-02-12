@@ -22,7 +22,7 @@ from huntflow_base_metrics.web_frameworks._request_metrics import (
 __all__ = ["add_middleware", "get_http_response_metrics"]
 
 
-class _PrometheusMiddleware(PrometheusMiddleware, BaseHTTPMiddleware):
+class _PrometheusMiddleware(PrometheusMiddleware[Request], BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         method = request.method
         path_template = self.get_path_template(request)

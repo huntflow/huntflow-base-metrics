@@ -44,7 +44,7 @@ class _RequestSpan:
     status_code: int = 200
 
 
-class _PrometheusMiddleware(PrometheusMiddleware, AbstractMiddleware):
+class _PrometheusMiddleware(PrometheusMiddleware[Request], AbstractMiddleware):
     scopes = {ScopeType.HTTP}
 
     def __init__(self, app: ASGIApp, *args: Any, **kwargs: Any) -> None:
