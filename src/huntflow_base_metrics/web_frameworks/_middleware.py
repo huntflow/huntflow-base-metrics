@@ -50,7 +50,7 @@ class PrometheusMiddleware(abc.ABC, Generic[RequestType]):
         pass
 
     @classmethod
-    def get_request_context(cls, request: Any) -> RequestContext:
+    def get_request_context(cls, request: RequestType) -> RequestContext:
         return RequestContext(
             method=cls.get_method(request),
             path_template=cls.get_path_template(request),
