@@ -73,6 +73,10 @@ class _PrometheusMiddleware(PrometheusMiddleware[Request], AbstractMiddleware):
         return wrapped_send
 
     @staticmethod
+    def get_method(request: Request) -> str:
+        return request.method
+
+    @staticmethod
     def get_path_template(request: Request) -> PathTemplate:
         return PathTemplate(value=request.scope["path_template"], is_handled=True)
 

@@ -35,6 +35,10 @@ class _PrometheusMiddleware(PrometheusMiddleware[Request]):
         return response
 
     @staticmethod
+    def get_method(request: Request) -> str:
+        return request.method
+
+    @staticmethod
     def get_path_template(request: Request) -> PathTemplate:
         match_info = request.match_info
         value = request.rel_url.path

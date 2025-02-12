@@ -37,6 +37,10 @@ class _PrometheusMiddleware(PrometheusMiddleware[Request], BaseHTTPMiddleware):
         return response
 
     @staticmethod
+    def get_method(request: Request) -> str:
+        return request.method
+
+    @staticmethod
     def get_path_template(request: Request) -> PathTemplate:
         for route in request.app.routes:
             match, _ = route.matches(request.scope)

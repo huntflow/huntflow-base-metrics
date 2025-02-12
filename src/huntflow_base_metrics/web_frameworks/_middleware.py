@@ -41,8 +41,9 @@ class PrometheusMiddleware(abc.ABC, Generic[RequestType]):
     exclude_routes: Optional[Set[str]] = None
 
     @staticmethod
+    @abc.abstractmethod
     def get_method(request: RequestType) -> str:
-        return request.method
+        pass
 
     @staticmethod
     @abc.abstractmethod
