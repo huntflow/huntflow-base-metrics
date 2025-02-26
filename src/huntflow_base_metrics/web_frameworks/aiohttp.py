@@ -43,7 +43,7 @@ class _PrometheusMiddleware(PrometheusMiddleware[Request]):
         match_info = request.match_info
         value = request.rel_url.path
         is_handled = False
-        if match_info and match_info.route.resource:
+        if match_info.route and match_info.route.resource:
             value = match_info.route.resource.canonical
             is_handled = True
         return PathTemplate(value=value, is_handled=is_handled)
