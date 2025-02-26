@@ -145,6 +145,22 @@ async def test_exclude(create_app):
     assert REGISTRY.get_sample_value("requests_total", labels) == 1
 
 
+async def test_unknown_routes_are_skipped(create_app):
+    client = await create_app()
+    response = await client.get("/unknown")
+    await check_response(response, status=404)
+
+    labels = COMMON_LABELS_VALUES.copy()
+    labels.update(
+        {
+            "method": "GET",
+            "path_template": "/unknown",
+        }
+    )
+
+    assert REGISTRY.get_sample_value("requests_total", labels) is None
+
+
 async def test_get_http_response_metrics(create_app):
     client = await create_app()
 

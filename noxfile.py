@@ -18,7 +18,7 @@ def test_litestar_versions(session, litestar_version):
 
 
 @nox.session()
-@nox.parametrize("aiohttp_version", ["3.9.1", "3.11.12"])
+@nox.parametrize("aiohttp_version", ["3.9.1", "3.11.13"])
 def test_aiohttp_versions(session, aiohttp_version):
     session.install(*DEPENDENCIES, f"aiohttp=={aiohttp_version}")
     session.run("pytest", "tests", "--framework=aiohttp", "-k", "test_frameworks")
