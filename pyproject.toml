@@ -1,6 +1,6 @@
 [project]
 name = "huntflow-base-metrics"
-version = "0.2.0"
+version = "0.2.1"
 description = "Prometheus metrics for Huntflow services"
 authors = [
     {name = "Developers huntflow", email = "developer@huntflow.ru"},
