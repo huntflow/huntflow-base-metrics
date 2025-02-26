@@ -74,7 +74,7 @@ def get_middleware(
     exclude_routes: Optional[Iterable[str]] = None,
 ) -> Callable:
     """
-    Returns observing middleware to the given AioHTTP application.
+    Returns observing middleware for AioHTTP application.
     Use if middleware order matters.
 
     :param include_routes: optional set of path templates to observe.
